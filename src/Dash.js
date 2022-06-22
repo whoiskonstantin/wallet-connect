@@ -52,26 +52,27 @@ const WalletConnectButton = ({ size, setUserId, onStepSatisfied, onStepDissatisf
     }
   }, [])
 
-  const { activeConnector, connectAsync, connectors, connect, isConnecting, pendingConnector } = useConnect({
-    onConnect: async connector => {
-      setDisabled(true)
-      await signMessageAsync()
-    },
-    onError: error => {
-      console.log('connection error', error)
+  const { activeConnector, connectAsync, connectors, connect, isConnecting, isConnected, pendingConnector } =
+    useConnect({
+      onConnect: async connector => {
+        setDisabled(true)
+        await signMessageAsync()
+      },
+      onError: error => {
+        console.log('connection error', error)
 
-      switch (error.code) {
-        case -32002:
-          setErrorMessage(
-            'There is a pending wallet connect request.\n\nPlease check your wallet to respond to that request before proceeding.'
-          )
-          setDisabled(true)
-          break
-        default:
-          setErrorMessage(error.message)
-      }
-    },
-  })
+        switch (error.code) {
+          case -32002:
+            setErrorMessage(
+              'There is a pending wallet connect request.\n\nPlease check your wallet to respond to that request before proceeding.'
+            )
+            setDisabled(true)
+            break
+          default:
+            setErrorMessage(error.message)
+        }
+      },
+    })
   // const recoveredAddress = React.useRef<string>();
   const {
     isError: isSignError,
@@ -86,13 +87,14 @@ const WalletConnectButton = ({ size, setUserId, onStepSatisfied, onStepDissatisf
       connectAsync()
       setDisabled(false)
     },
-    async onSuccess(data, variables) {
+    onSuccess(data, variables) {
       // console.log('Verifying signature...');
       // recoveredAddress.current = verifyMessage(variables.message, data);
       // console.log('Recovered Address: ', recoveredAddress.current);
-      // console.log('data', data);
+      console.log('data', data, variables)
       setErrorMessage('')
-      await registerUserAccount(accountData.address, variables.message, data)
+      console.log('onSucces accountData', accountData)
+      // registerUserAccount(accountData.address, variables.message, data)
 
       // if (recoveredAddress.current === accountData.address) {
       //   console.log('Signature verified!');
@@ -107,7 +109,7 @@ const WalletConnectButton = ({ size, setUserId, onStepSatisfied, onStepDissatisf
   })
 
   const registerUserAccount = async (address, message, data) => {
-    console.log('Registering user account...')
+    console.log('Registering user account...', address, message, data)
 
     // const request = generateFetchRequest({
     //   method: 'POST',
@@ -142,6 +144,7 @@ const WalletConnectButton = ({ size, setUserId, onStepSatisfied, onStepDissatisf
     //   onStepDissatisfied()
     // }
   }
+  console.log('isConnected', isConnected)
 
   const getWalletDisplay = address => {
     return address.substring(0, 6) + '...' + address.substring(address.length - 4)
@@ -154,11 +157,12 @@ const WalletConnectButton = ({ size, setUserId, onStepSatisfied, onStepDissatisf
         <Alert type='warning' message='To use a different account please select it from your wallet now.' />
         <div className='wallet-connector-btns'>
           <Button disabled={isSignLoading} onClick={async () => await signMessageAsync()} className='meta-mask-button'>
-            <img src='/images/crypto/meta-mask-logo.png' alt='MetaMask' style={{ height: 30, marginRight: 10 }} />
+            {/* <img src='/images/crypto/meta-mask-logo.png' alt='MetaMask' style={{ height: 30, marginRight: 10 }} /> */}
             {isSignLoading ? 'Requesting Signature' : `Verify ${getWalletDisplay(accountData.address)}`}
           </Button>
         </div>
         {isSignError && <Alert type='error' message={signError.message} />}
+        <div>{<Button onClick={disconnect}>Disconnect</Button>}</div>
       </>
     )
   }
@@ -184,7 +188,7 @@ const WalletConnectButton = ({ size, setUserId, onStepSatisfied, onStepDissatisf
               }}
               disabled={isDisabled || isConnecting}
             >
-              <img src='/images/crypto/meta-mask-logo.png' alt='MetaMask' style={{ height: 30, marginRight: 10 }} />
+              {/* <img src='/images/crypto/meta-mask-logo.png' alt='MetaMask' style={{ height: 30, marginRight: 10 }} /> */}
               {isConnecting && connector.id === pendingConnector?.id
                 ? 'Requesting Connection'
                 : connector.name !== 'Injected'
